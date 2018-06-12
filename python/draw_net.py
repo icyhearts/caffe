@@ -17,9 +17,9 @@ def parse_args():
     parser = ArgumentParser(description=__doc__,
                             formatter_class=ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('input_net_proto_file',
+    parser.add_argument('--input-net-proto-file',type=str,
                         help='Input network prototxt file')
-    parser.add_argument('output_image_file',
+    parser.add_argument('--output-image-file',type=str,
                         help='Output image file')
     parser.add_argument('--rankdir',
                         help=('One of TB (top-bottom, i.e., vertical), '
@@ -33,7 +33,7 @@ def parse_args():
                               'TEST, or ALL.  If ALL, then all layers are drawn '
                               'regardless of phase.'),
                         default="ALL")
-    parser.add_argument('--display_lrm', action='store_true',
+    parser.add_argument('--display-lrm', action='store_true',
                         help=('Use this flag to visualize the learning rate '
                               'multiplier, when non-zero, for the learning '
                               'layers (Convolution, Deconvolution, InnerProduct).'))
