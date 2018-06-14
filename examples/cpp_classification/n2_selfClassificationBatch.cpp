@@ -304,10 +304,8 @@ int main(int argc, char** argv) {
 	for(int i=0; i<imgLabelList.size(); ++i){
 		std::vector<cv::Mat> imgs;
 		cv::Mat img = cv::imread(imgLabelList[i].first, -1);
-		Mat resizedImg;
-		cv::resize(img, resizedImg, cv::Size(224,224)); //Size(double width, double height)
-		CHECK(!resizedImg.empty()) << "Unable to decode image " << imgLabelList[i].first;
-		imgs.push_back(resizedImg);
+		CHECK(!img.empty()) << "Unable to decode image " << imgLabelList[i].first;
+		imgs.push_back(img);
 		// all_predictions should have batchSize element: <vector<Prediction>>
 		std::vector<std::vector<Prediction> > all_predictions = classifier.Classify(imgs);
 		std::vector<Prediction>& predictions = all_predictions[0];// predictions has N element
