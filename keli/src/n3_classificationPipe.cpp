@@ -27,21 +27,19 @@ using cv::Mat;
 
 
 int main(int argc, char** argv) {
-	if (argc < 6) {
-		std::cerr << "Usage: " << argv[0]
-			<< " deploy.prototxt network.caffemodel"
-			<< " mean.binaryproto labels.txt img.jpg" << std::endl;
-		return 1;
+	ParameterReader paraReader("paraFile.txt");
+	string model_file   = paraReader.getData("model_file");
+	string trained_file = paraReader.getData("trained_file");
+	string mean_file    = paraReader.getData("mean_file");
+	string label_file   = paraReader.getData("label_file");
+	string testMode = paraReader.getData("testMode");
+	if (! testMode.compare("VIDEO_FILE")){
+		
 	}
 
-	::google::InitGoogleLogging(argv[0]);
-
-	string model_file   = argv[1];
-	string trained_file = argv[2];
-	string mean_file    = argv[3];
-	string label_file   = argv[4];
 	Classifier classifier(model_file, trained_file, mean_file, label_file);
 	vector<string> mainLabels = classifier.getLabels();
+	//
 	string filelist = argv[5];
 	ifstream fin(filelist);
 	if (!fin)
