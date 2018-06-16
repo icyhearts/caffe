@@ -24,6 +24,8 @@ using std::endl;
 using std::ifstream;
 using std::ofstream;
 using cv::Mat;
+using cv::VideoCapture;
+
 
 
 int main(int argc, char** argv) {
@@ -34,7 +36,22 @@ int main(int argc, char** argv) {
 	string label_file   = paraReader.getData("label_file");
 	string testMode = paraReader.getData("testMode");
 	if (! testMode.compare("VIDEO_FILE")){
-		
+		string inVideo = paraReader.getData("inVideo");
+		VideoCapture capture(inVideo);
+		if(!capture.isOpened())
+		{
+			cout<<"open video  failed\n";
+			return -1;
+		}
+		size_t frame_count = (int)capture.get(CAP_PROP_FRAME_COUNT);
+		Mat frame;
+		for(size_t i=0; i<frame_count; ++i){
+			capture>>frame;
+			if( frame.empty() ){
+				cout<<__LINE__<<": reading frame "<<i<<" failed\n";
+			}
+		}
+
 	}
 
 	Classifier classifier(model_file, trained_file, mean_file, label_file);
