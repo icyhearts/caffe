@@ -132,9 +132,9 @@ int main(int argc, char** argv) {
 				cv::rectangle(frame, allRect[3].leftTop, allRect[3].rightBottom, rectColor, rectThickness);
 				cv::putText(frame, predLabel, allRect[3].leftTop+textOrgShift, textFontface, textFontScale, textColor, textThick);
 			}
-			cv::imshow(testMode, frame);
+//			cv::imshow(testMode, frame);
 //			cv::waitKey(1);
-//			imgs.clear();
+			imgs.clear();
 			gettimeofday(&tv_stop, NULL);
 			unsigned long totalUsec = 1e6 * (tv_stop.tv_sec-tv_start.tv_sec) + tv_stop.tv_usec - tv_start.tv_usec;
 			double totalMs = 1.0*totalUsec*1e-3;
@@ -144,7 +144,9 @@ int main(int argc, char** argv) {
 		}// for(size_t i=0; i<frame_count; ++i)
 		capture.release();
 	}//if (! testMode.compare("VIDEO_FILE")){
-
+int ppp;
+cout<<"enter ppp\n";
+cin>>ppp;
 	// ///////////////////
 	string filelist = argv[5];
 	ifstream fin(filelist);
