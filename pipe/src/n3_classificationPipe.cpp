@@ -1,4 +1,5 @@
 #include <caffe/caffe.hpp>
+#include<assert.h>
 #include<fstream>
 #include<map>
 #include <opencv2/core/core.hpp>
@@ -10,6 +11,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include<sys/time.h>
 
 // self
 #include"include/utils.h"
@@ -25,16 +27,35 @@ using std::ifstream;
 using std::ofstream;
 using cv::Mat;
 using cv::VideoCapture;
-
+using cv::Range;
+using cv::Point;
 
 
 int main(int argc, char** argv) {
-	ParameterReader paraReader("paraFile.txt");
+	ParameterReader paraReader("pipe/paraFile.txt");
 	string model_file   = paraReader.getData("model_file");
 	string trained_file = paraReader.getData("trained_file");
 	string mean_file    = paraReader.getData("mean_file");
 	string label_file   = paraReader.getData("label_file");
 	string testMode = paraReader.getData("testMode");
+	Classifier classifier(model_file, trained_file, mean_file, label_file);
+	vector<string> mainLabels = classifier.getLabels();
+	/*l_rect = [80,150,680,1070] # xmin,ymin, xmax, ymax←
+ m_rect = [800,700,1100,1080]←
+ r_rect = [1100,150,1800,950]←
+ t_rect = [690,40, 1090, 320]←
+*/
+	int l_rect[4] = {80,150,680,1070};  //  xmin,ymin, xmax, ymax←
+	int m_rect[4] = {800,700,1100,1080};
+	int r_rect[4] = {1100,150,1800,950};
+	int t_rect[4] = {690,40, 1090, 320};
+	vector<MyRect> allRect = {
+		{Point(80,150), Point(680, 1070)},// left
+		{Point(800,700), Point(1100, 1080)},// mid
+		{Point(1100,150), Point(1800,950)},// right
+		{Point(690,40), Point(1090, 320)}// top
+	};
+	float abnormThresh = 0.8;
 	if (! testMode.compare("VIDEO_FILE")){
 		string inVideo = paraReader.getData("inVideo");
 		VideoCapture capture(inVideo);
@@ -45,18 +66,86 @@ int main(int argc, char** argv) {
 		}
 		size_t frame_count = (int)capture.get(CAP_PROP_FRAME_COUNT);
 		Mat frame;
-		for(size_t i=0; i<frame_count; ++i){
+		std::vector<cv::Mat> imgs;
+		imgs.clear();
+		struct timeval tv_start, tv_stop;
+		for(size_t iFrame=0; iFrame<frame_count; ++iFrame){
+			gettimeofday(&tv_start, NULL);
 			capture>>frame;
 			if( frame.empty() ){
-				cout<<__LINE__<<": reading frame "<<i<<" failed\n";
+				cout<<__LINE__<<": reading frame "<<iFrame<<" failed\n";
 			}
-		}
+			/* cv::Mat subImg = img(cv::Range(0, 100), cv::Range(0, 100)); */
+			for(size_t j=0; j<allRect.size(); ++j){
+				Mat subMat = frame(
+				Range(allRect[j].leftTop.y, allRect[j].rightBottom.y),
+				Range(allRect[j].leftTop.x, allRect[j].rightBottom.x)
+				);
+				imgs.push_back(subMat);
+			}
+			// all_predictions should have batchSize element: <vector<Prediction>>
+			std::vector<std::vector<Prediction> > all_predictions = classifier.Classify(imgs);
+			assert(all_predictions.size() == allRect.size());
+			// prepare variable
+			Prediction patchPred;
+			string predLabel; 
+			float predProb;
+			// rect
+			Scalar rectColor(0,0, 255);
+			int rectThickness = 2;
+			// text
+			int textFontface = 1;
+			int textFontScale = 3;
+			Scalar textColor(255, 0,0);
+			int textThick = 1;
+			Point textOrgShift(0, -5);
+			// end of prepare variable
+// we only need top-1, so only extract all_predictions[iPred] [0]
+			patchPred = all_predictions[0] [0];// left
+			predLabel = patchPred.first;
+			predProb = patchPred.second;
+			if( (!predLabel.compare("left_abnormal")) && predProb>abnormThresh){
+//void rectangle(InputOutputArray img, Point pt1, Point pt2, const Scalar& color, int thickness=1, int lineType=LINE_8, int shift=0 )
+//oid putText(InputOutputArray img, const String& text, Point org, int fontFace, double fontScale, Scalar color, int thickness=1, int lineType=LINE_8, bool bottomLeftOrigin=false )
+				cv::rectangle(frame, allRect[0].leftTop, allRect[0].rightBottom, rectColor, rectThickness);
+				cv::putText(frame, predLabel, allRect[0].leftTop+textOrgShift, textFontface, textFontScale, textColor, textThick);
+			
+			}
+			patchPred = all_predictions[1] [0];// mid
+			predLabel = patchPred.first;
+			predProb = patchPred.second;
+			if( (!predLabel.compare("mid_abnormal")) && predProb>abnormThresh){
+				cv::rectangle(frame, allRect[1].leftTop, allRect[1].rightBottom, rectColor, rectThickness);
+				cv::putText(frame, predLabel, allRect[1].leftTop+textOrgShift, textFontface, textFontScale, textColor, textThick);
+			}
+			patchPred = all_predictions[2] [0];// right
+			predLabel = patchPred.first;
+			predProb = patchPred.second;
+			if( (!predLabel.compare("right_abnormal")) && predProb>abnormThresh){
+				cv::rectangle(frame, allRect[2].leftTop, allRect[2].rightBottom, rectColor, rectThickness);
+				cv::putText(frame, predLabel, allRect[2].leftTop+textOrgShift, textFontface, textFontScale, textColor, textThick);
+			}
+			patchPred = all_predictions[3] [0];// top
+			predLabel = patchPred.first;
+			predProb = patchPred.second;
+			if( (!predLabel.compare("top_abnormal")) && predProb>abnormThresh){
+				cv::rectangle(frame, allRect[3].leftTop, allRect[3].rightBottom, rectColor, rectThickness);
+				cv::putText(frame, predLabel, allRect[3].leftTop+textOrgShift, textFontface, textFontScale, textColor, textThick);
+			}
+			cv::imshow(testMode, frame);
+//			cv::waitKey(1);
+//			imgs.clear();
+			gettimeofday(&tv_stop, NULL);
+			unsigned long totalUsec = 1e6 * (tv_stop.tv_sec-tv_start.tv_sec) + tv_stop.tv_usec - tv_start.tv_usec;
+			double totalMs = 1.0*totalUsec*1e-3;
+			double fps = 1.0 / (totalMs*1e-3);
+			cout<<"one total frame, totalMs="<<totalMs<<" ms, fps="<<fps<<" \n";
 
-	}
+		}// for(size_t i=0; i<frame_count; ++i)
+		capture.release();
+	}//if (! testMode.compare("VIDEO_FILE")){
 
-	Classifier classifier(model_file, trained_file, mean_file, label_file);
-	vector<string> mainLabels = classifier.getLabels();
-	//
+	// ///////////////////
 	string filelist = argv[5];
 	ifstream fin(filelist);
 	if (!fin)
