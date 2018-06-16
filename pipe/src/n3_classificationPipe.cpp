@@ -136,10 +136,9 @@ int main(int argc, char** argv) {
 //			cv::waitKey(1);
 			imgs.clear();
 			gettimeofday(&tv_stop, NULL);
-			unsigned long totalUsec = 1e6 * (tv_stop.tv_sec-tv_start.tv_sec) + tv_stop.tv_usec - tv_start.tv_usec;
-			double totalMs = 1.0*totalUsec*1e-3;
+			double totalMs = 1e3 * (tv_stop.tv_sec-tv_start.tv_sec) + 1e-3 * (tv_stop.tv_usec-tv_start.tv_usec);
 			double fps = 1.0 / (totalMs*1e-3);
-			cout<<"one total frame, totalMs="<<totalMs<<" ms, fps="<<fps<<" \n";
+			cout<<"frame "<<iFrame<<", totalMs="<<totalMs<<" ms, fps="<<fps<<" \n";
 
 		}// for(size_t i=0; i<frame_count; ++i)
 		capture.release();
