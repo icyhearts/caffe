@@ -260,13 +260,13 @@ int main(int argc, char** argv) {
 
 	::google::InitGoogleLogging(argv[0]);
 
-	string model_file   = argv[1];
+	string model_file   = argv[1];// deploy.prototxt
 	string trained_file = argv[2];
 	string mean_file    = argv[3];
 	string label_file   = argv[4];
 	Classifier classifier(model_file, trained_file, mean_file, label_file);
 	vector<string> mainLabels = classifier.getLabels();
-	string filelist = argv[5];
+	string filelist = argv[5];// file with 2 domain: img absolute path, string label
 	ifstream fin(filelist);
 	if (!fin)
 	{
@@ -306,14 +306,17 @@ int main(int argc, char** argv) {
 		cv::Mat img = cv::imread(imgLabelList[i].first, -1);
 		CHECK(!img.empty()) << "Unable to decode image " << imgLabelList[i].first;
 		imgs.push_back(img);
-		// all_predictions should have batchSize element: <vector<Prediction>>
+		// all_predictions should have batchSize element: <vector<Prediction>>, here batchSize = 1
 		std::vector<std::vector<Prediction> > all_predictions = classifier.Classify(imgs);
 		std::vector<Prediction>& predictions = all_predictions[0];// predictions has N element
 		Prediction p = predictions[0]; // we only need top-1
 		string predLabel = p.first;
 		string realLabel = mainLabels[ imgLabelList[i].second];
 		string imgName = imgLabelList[i].first;
-		string lineBuffer = imgName + " |" + realLabel + " |" + predLabel;
+		string lineBuffer = imgName + " [r]" + realLabel + " [p](" + predLabel +":"+ std::to_string(p.second) + ")";
+		lineBuffer += "(" + predictions[1].first +":"+ std::to_string(predictions[1].second) + ")";
+		lineBuffer += "(" + predictions[2].first +":"+ std::to_string(predictions[2].second) + ")";
+		lineBuffer += "(" + predictions[3].first +":"+ std::to_string(predictions[3].second) + ")";
 		if(!realLabel.compare(predLabel) ){//  == =>0
 			lineBuffer += "\n";
 		}else{
