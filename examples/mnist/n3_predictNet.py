@@ -3,6 +3,8 @@
 # aim: predict lenet mnist, read jpg
 # date:
 # idea:
+import sys
+sys.path.insert(0, "/usr/local/caffe/python/")
 import caffe  
 import numpy as np  
 import os
