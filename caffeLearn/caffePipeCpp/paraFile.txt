@@ -1,0 +1,6 @@
+model_file = /home/storage/caffePipe/model/resnet50/resnet50-deploy.prototxt
+trained_file = /home/storage/caffePipe/model/resnet50/selfSelected/snapshots__iter_116512.caffemodel
+mean_file = /home/storage/caffePipe/meanFile/pipeTrainMean.binaryproto
+label_file = /home/storage/caffePipe/predict/labels.txt
+inVideo = /home/storage/datasetAcademic/pipeProgram/2018-04-11/originVideo/192.168.0.166_01_201804111542330.mp4
+testMode = VIDEO_FILE

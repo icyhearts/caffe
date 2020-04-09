@@ -1,0 +1,151 @@
+<!-- 
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script></h1>
+	<h2> <script>cSubSection+=1;cSubSubSection=0; document.write("section ", cSection, ".",cSubSection," "); </script></h2>
+	<h3> <script>cSubSubSection+=1; document.write("section ", cSection, ".",cSubSection,".",cSubSubSection," "); </script></h3>
+	<h1> <script>cSection+=1;cSubSection=0;cSubSection=0;document.write("section ", cSection, " "); </script></h1>
+<table style="width:30%">
+<caption> padding, alignment, sizeof </caption>
+<tr> <th>type</th> <th>32bit </th>  <th>64 bit</th></tr>
+</table>
+-->
+<!DOCTYPE html>
+<html>
+	<head>
+	<meta charset="UTF-8">
+	<link href="./readme.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script></h1>
+<pre>
+从solver中得到Net ptr
+class Solver
+{
+	shared_ptr&lt; Net&lt; Dtype &gt; &gt; net ()
+};
+
+从Net中得到Layer ptr
+caffe::Net&lt; Dtype &gt;
+{
+	const shared_ptr&lt; Layer&lt; Dtype &gt; &gt; 	layer_by_name (const string &layer_name) const
+	void Net&lt;Dtype&gt;::CopyTrainedLayersFrom(const NetParameter& param){}
+	const vector&lt;Blob&lt;Dtype&gt;*&gt;& Forward(Dtype* loss = NULL);
+	const shared_ptr&lt;Blob&lt;Dtype&gt; &gt; blob_by_name(const string& blob_name) const;
+
+};
+//
+template &lt;typename Dtype&gt;
+class Solver
+{
+	vector&lt;shared_ptr&lt;Net&lt;Dtype&gt; &gt; &gt; test_nets_;
+	const vector&lt;shared_ptr&lt;Net&lt;Dtype&gt; &gt; &gt;& test_nets()
+	{
+		return test_nets_;
+	}
+};
+//
+class Blob{
+	const Dtype* cpu_data() const;
+};
+</pre>
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>call graph</h1>
+<pre>
+main----|ReadSolverParamsFromTextFileOrDie
+  |solver::net()
+    |Net::layer_by_name("inputdata")
+  |MemoryDataLayer&lt;Dtype&gt;::Reset
+  |Solver::Solve();
+
+</pre>
+
+
+
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>code</h1>
+<pre>
+namespace caffe {
+	class SolverRegistry {
+		typedef Solver&lt;Dtype&gt;* (*Creator)(const SolverParameter&);
+		typedef std::map&lt;string, Creator&gt; CreatorRegistry;
+	}
+}
+
+//
+src/caffe/solver.cpp
+caffe中网络输入输出形状的判断:
+./src/caffe/layers/data_layer.cpp:31
+
+</pre>
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script></h1>
+<pre>
+caffe.proto提供的类:
+
+message ReLUParameter {
+}
+LayerParameter有很多xxxParameter作为数据成员:
+message LayerParameter {
+  optional ReLUParameter relu_param = 123;
+  optional SigmoidParameter sigmoid_param = 38;
+}
+
+message SolverParameter {
+  optional string type = 40 [default = "SGD"];
+}
+
+</pre>
+
+
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>Layer class继承关系</h1>
+<pre>
+<img src="documentImage/classcaffe_1_1NeuronLayer__inherit__graph.png">
+</pre>
+
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>class Blob</h1>
+<pre>
+public:
+  const Dtype* cpu_data() const{
+    return (const Dtype*)data_-&gt;cpu_data();// SyncedMemory::cpu_data
+  }
+  const Dtype* Blob&lt;Dtype&gt;::cpu_diff() const {
+    CHECK(diff_);
+    return (const Dtype*)diff_-&gt;cpu_data();// SyncedMemory::cpu_data
+  }
+ protected:
+  shared_ptr&lt;SyncedMemory&gt; data_;
+  shared_ptr&lt;SyncedMemory&gt; diff_;
+  shared_ptr&lt;SyncedMemory&gt; shape_data_;
+  vector&lt;int&gt; shape_;
+  int count_;
+  int capacity_;
+</pre>
+
+
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>Layer的继承关系</h1>
+<p>
+
+<img src="documentImage/classcaffe_1_1Layer__inherit__graph.png">
+</p>
+
+
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>solver class相关</h1>
+<pre>
+class SolverRegistry {
+ public:
+  typedef Solver<Dtype>* (*Creator)(const SolverParameter&);
+  typedef std::map<string, Creator> CreatorRegistry;
+  static Solver<Dtype>* CreateSolver(const SolverParameter& param);
+}
+
+// SolverRegisterer的构造函数调用SolverRegistry::AddCreator
+template <typename Dtype>
+class SolverRegisterer {
+ public:
+  SolverRegisterer(const string& type,
+      Solver&lt;Dtype&gt;* (*creator)(const SolverParameter&)) {
+    // LOG(INFO) &lt;&lt; "Registering solver type: " &lt;&lt; type;
+    SolverRegistry&lt;Dtype&gt;::AddCreator(type, creator);
+  }
+};
+
+</pre>
+	</body>
+</html>
