@@ -11,3 +11,4 @@ git add gitpush.sh gitpull.sh
 git add mycmakePython2.sh  mycmake.sh
 git add documentImage/*.png
 
+cd caffeLearn/cpp_xor/ && git add cpp_xor.cpp  learn.cpp  learn.prototext  model.prototxt  solver.prototxt && cd ../..
