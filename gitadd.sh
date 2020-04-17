@@ -9,6 +9,6 @@ git add caffeLearn/{detectInference.py,n1_blob.cpp,n2_glogLearn.cpp,n3_protobufS
 git add caffeLearn/caffePipeCpp/learn/n1_lmdb.py caffeLearn/caffePipeCpp/learn/readme.css caffeLearn/caffePipeCpp/learn/n3_lmdb.py caffeLearn/caffePipeCpp/learn/readme.html caffeLearn/caffePipeCpp/learn/n4_readcaffeLmdb.py caffeLearn/caffePipeCpp/learn/n2_readLmdb.py caffeLearn/caffePipeCpp/include/classify.h caffeLearn/caffePipeCpp/include/utils.h caffeLearn/caffePipeCpp/src/classify.c caffeLearn/caffePipeCpp/paraFile.txt
 git add gitpush.sh gitpull.sh
 git add mycmakePython2.sh  mycmake.sh
-git add documentImage/*.png
+git add documentImage/*.{png,jpg}
 
 cd caffeLearn/cpp_xor/ && git add cpp_xor.cpp  learn.cpp  learn.prototext  model.prototxt  solver.prototxt && cd ../..

@@ -18,43 +18,166 @@
 
 	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script></h1>
 <pre>
+<a href="documentImage/IMG_20200417_111430.jpg">sigmoid函数求导 </a>
+template &lt;typename Dtype&gt;
+class SigmoidCrossEntropyLossLayer : public LossLayer&lt;Dtype&gt; {
+  /// sigmoid_output stores the output of the SigmoidLayer.
+  shared_ptr&lt;Blob&lt;Dtype&gt; &gt; sigmoid_output_;
+  Dtype normalizer_;
+  int outer_num_, inner_num_;
+  /// How to normalize the loss.
+  LossParameter_NormalizationMode normalization_;
+  /// Whether to ignore instances with a certain label.
+  bool has_ignore_label_;
+  /// The label indicating that an instance should be ignored.
+  int ignore_label_;
+  /// The internal SigmoidLayer used to map predictions to probabilities.
+  shared_ptr&lt;SigmoidLayer&lt;Dtype&gt; &gt; sigmoid_layer_;
+  /// bottom vector holder to call the underlying SigmoidLayer::Forward
+  vector&lt;Blob&lt;Dtype&gt;*&gt; sigmoid_bottom_vec_;
+  /// top vector holder to call the underlying SigmoidLayer::Forward
+  vector&lt;Blob&lt;Dtype&gt;*&gt; sigmoid_top_vec_;
+
+};
+template &lt;typename Dtype&gt;
+class InnerProductLayer : public Layer&lt;Dtype&gt; {
+  private:
+  // in NxCxHxW
+  int M_; // M_=N of input,=batch size
+  int K_; // K_ = CxHxW of  input
+  int N_; // N_:  num of class in output
+  Blob&lt;Dtype&gt; bias_multiplier_;//形状为 batchsize
+  bool transpose_;  // if true, assume transposed weights
+};
+
+
+    bias_multiplier_.Reshape(bias_shape);
+
+
+template &lt;typename Dtype&gt;
+class Layer {
+  protected:
+
+  /** The vector that indicates whether each top blob has a non-zero weight in
+   *  the objective function. */
+  vector&lt;Dtype&gt; loss_;
+  LayerParameter layer_param_;
+  Phase phase_;
+  /** Vector indicating whether to compute the diff of each param blob. */
+  vector&lt;bool&gt; param_propagate_down_;
+  vector&lt;shared_ptr&lt;Blob&lt;Dtype&gt; &gt; &gt; blobs_; //权重
+};
 从solver中得到Net ptr
 class Solver
 {
-	shared_ptr&lt; Net&lt; Dtype &gt; &gt; net ()
+  SolverParameter param_;
+  int iter_;
+  int current_step_;
+  shared_ptr&lt;Net&lt;Dtype&gt; &gt; net_;
+  vector&lt;shared_ptr&lt;Net&lt;Dtype&gt; &gt; &gt; test_nets_;
+  vector&lt;Callback*&gt; callbacks_;
+  Dtype smoothed_loss_;
+  Dtype smoothed_loss_;
+  vector&lt;Dtype&gt; losses_;
+	shared_ptr&lt; Net&lt; Dtype &gt; &gt; net (){return net_; }
+  vector&lt;shared_ptr&lt;Net&lt;Dtype&gt; &gt; &gt; test_nets_;
+  inline const vector&lt;shared_ptr&lt;Net&lt;Dtype&gt; &gt; &gt;& test_nets() {
+    return test_nets_;
+  }
+  vector&lt;Blob&lt;Dtype&gt;*&gt; learnable_params_;
+};
+
+
+template &lt;typename Dtype&gt;
+class SGDSolver : public Solver&lt;Dtype&gt; {
+  // history maintains the historical momentum data.
+  // update maintains update related data and is not needed in snapshots.
+  // temp maintains other information that might be needed in computation
+  //   of gradients/updates and is not needed in snapshots
+  vector&lt;shared_ptr&lt;Blob&lt;Dtype&gt; &gt; &gt; history_, update_, temp_;
 };
 
 从Net中得到Layer ptr
-caffe::Net&lt; Dtype &gt;
-{
+template &lt;typename Dtype&gt;
+class Net {
+  /// The parameters in the network.
+  vector&lt;shared_ptr&lt;Blob&lt;Dtype&gt; &gt; &gt; params_;
+  vector&lt;Blob&lt;Dtype&gt;*&gt; learnable_params_;
+
+	vector&lt;vector&lt;bool&gt; &gt; bottom_need_backward_;
+	vector&lt;bool&gt; layer_need_backward_; //指示器，与layers_等长，表明需要不需要backward,数据层不需要，后面一般需要
 	const shared_ptr&lt; Layer&lt; Dtype &gt; &gt; 	layer_by_name (const string &layer_name) const
 	void Net&lt;Dtype&gt;::CopyTrainedLayersFrom(const NetParameter& param){}
 	const vector&lt;Blob&lt;Dtype&gt;*&gt;& Forward(Dtype* loss = NULL);
 	const shared_ptr&lt;Blob&lt;Dtype&gt; &gt; blob_by_name(const string& blob_name) const;
 
-};
-//
-template &lt;typename Dtype&gt;
-class Solver
-{
-	vector&lt;shared_ptr&lt;Net&lt;Dtype&gt; &gt; &gt; test_nets_;
-	const vector&lt;shared_ptr&lt;Net&lt;Dtype&gt; &gt; &gt;& test_nets()
-	{
-		return test_nets_;
-	}
-};
-//
-class Blob{
-	const Dtype* cpu_data() const;
+  /// bottom_vecs stores the vectors containing the input for each layer.
+  /// They don't actually host the blobs (blobs_ does), so we simply store
+  /// pointers.
+  vector&lt;vector&lt;Blob&lt;Dtype&gt;*&gt; &gt; bottom_vecs_;
+  /// top_vecs stores the vectors containing the output for each layer
+  vector&lt;vector&lt;Blob&lt;Dtype&gt;*&gt; &gt; top_vecs_;
+
+
+  vector&lt;Callback*&gt; before_forward_;
+  vector&lt;Callback*&gt; after_forward_;
+  vector&lt;Callback*&gt; before_backward_;
+  vector&lt;Callback*&gt; after_backward_;
+  Dtype ForwardFromTo(int start, int end);
+  vector&lt;shared_ptr&lt;Layer&lt;Dtype&gt; &gt; &gt; layers_;
+  map&lt;string, int&gt; layer_names_index_;
+  vector&lt;Blob&lt;Dtype&gt;*&gt; net_output_blobs_;
 };
 </pre>
 	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>call graph</h1>
 <pre>
+InnerProductLayer&lt;Dtype&gt;::Forward_cpu
+caffe中全连接层计算的是数学上:
+input       * weight     = output
+Batch x Nin * Nin x Nout = Batch x Nout
+
+其中weight在数学上是Nin x Nout的形式，在内存中是按Nout x Nin的格式存储的
+证据：
+gdb中blobs_[0]-&gt;shape() = {Nout, Nin}// vector
+这也是调用cblas_sgemm的时候，矩阵B的参数有 TransB=CblasTrans的原因
+
+ (全1向量) bias     input         weight(数学上Nin x Nout, 内存中Nout x Nin)
+ Batchx1 * 1xNout + Batch x Nin * Nin x Nout
+=Batch x Nout + Batch x Nout
+=Batch x Nout
 main----|ReadSolverParamsFromTextFileOrDie
   |solver::net()
     |Net::layer_by_name("inputdata")
   |MemoryDataLayer&lt;Dtype&gt;::Reset
   |Solver::Solve();
+    |Solver&lt;Dtype&gt;::Step
+      |net_-&gt;ForwardBackward()
+      | |Net::Forward()
+      | | |ForwardFromTo(0, layers_.size() - 1);
+      | | | |Layer::Forward(bottom_vecs_[i], top_vecs_[i]);
+      | | | | |caffe::BaseDataLayer&lt;float&gt;::Reshape
+      | | | | |caffe::MemoryDataLayer&lt;float&gt;::Forward_cpu
+      | | | | | |caffe::Blob&lt;float&gt;::Reshape// 改变Blob的shape_data_(shared_ptr&lt;SyncedMemory&gt;) 和 shape_(vector)这两个成员
+      | | | | | |top[0]-&gt;Reshape(batch_size_, channels_, height_, width_);
+      | | | | | |top[1]-&gt;Reshape(batch_size_, 1, 1, 1);
+      | | | | | |top[0]-&gt;set_cpu_data(data_ + pos_ * size_);
+      | | | | |   |SyncedMemory::set_cpu_data
+      | | | | |     |check_device(); // CPU_ONLY的话不会调用
+      | | | | | |top[1]-&gt;set_cpu_data(labels_ + pos_);
+      | | | | |InnerProductLayer&lt;Dtype&gt;::Reshape(const vector&lt;Blob&lt;Dtype&gt;*&gt;& bottom,
+      | | | |   |Blob::CanonicalAxisIndex
+      | | | | |caffe::NeuronLayer&lt;float&gt;::Reshape
+      | | | | |caffe::SigmoidCrossEntropyLossLayer&lt;float&gt;::Reshape
+      | | | |   |LossLayer&lt;Dtype&gt;::Reshape(bottom,top);//vector<int>loss_shape(0); //Loss layers output a scalar;0 axes.
+      | |caffe::Net&lt;float&gt;::Backward
+      |   |caffe::caffe::Net&lt;float&gt;::BackwardFromTo
+      |UpdateSmoothedLoss(loss, start_iter, average_loss)
+      |caffe::SGDSolver&lt;float&gt;::ApplyUpdate
+        |Normalize(param_id);
+        |Regularize(param_id);
+        |ComputeUpdateValue(param_id, rate);
+        |caffe::Net&lt;float&gt;::Update
+          |caffe::Blob&lt;Dtype&gt;::Update()
 
 </pre>
 
@@ -78,6 +201,28 @@ caffe中网络输入输出形状的判断:
 	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script></h1>
 <pre>
 caffe.proto提供的类:
+
+
+message LossParameter {
+  // If specified, ignore instances with the given label.
+  optional int32 ignore_label = 1;
+  // How to normalize the loss for loss layers that aggregate across batches,
+  // spatial dimensions, or other dimensions.  Currently only implemented in
+  // SoftmaxWithLoss and SigmoidCrossEntropyLoss layers.
+  enum NormalizationMode {
+    // Divide by the number of examples in the batch times spatial dimensions.
+    // Outputs that receive the ignore label will NOT be ignored in computing
+    // the normalization factor.
+    FULL = 0;
+    // Divide by the total number of output locations that do not take the
+    // ignore_label.  If ignore_label is not set, this behaves like FULL.
+    VALID = 1;
+    // Divide by the batch size.
+    BATCH_SIZE = 2;
+    // Do not normalize the loss.
+    NONE = 3;
+  }
+}
 
 message ReLUParameter {
 }
@@ -118,6 +263,28 @@ public:
   int capacity_;
 </pre>
 
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>class SyncedMemory</h1>
+<pre>
+class SyncedMemory {
+ public:
+  enum SyncedHead { UNINITIALIZED, HEAD_AT_CPU, HEAD_AT_GPU, SYNCED };
+  SyncedMemory();
+  explicit SyncedMemory(size_t size);
+  ~SyncedMemory();
+  const void* cpu_data();
+  void set_cpu_data(void* data);
+ private:
+  void* cpu_ptr_;
+  void* gpu_ptr_;
+  size_t size_; // sizeof(DType)*N
+
+  SyncedHead head_;
+  bool own_cpu_data_;
+  bool cpu_malloc_use_cuda_;
+  bool own_gpu_data_;
+  int device_;
+}
+</pre>
 
 	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>Layer的继承关系</h1>
 <p>
@@ -136,7 +303,7 @@ class SolverRegistry {
 }
 
 // SolverRegisterer的构造函数调用SolverRegistry::AddCreator
-template <typename Dtype>
+template &lt;typename Dtype&gt;
 class SolverRegisterer {
  public:
   SolverRegisterer(const string& type,
@@ -146,6 +313,94 @@ class SolverRegisterer {
   }
 };
 
+    boost::shared_ptr&lt;caffe::Solver&lt;float&gt; &gt; solver(caffe::SolverRegistry&lt;float&gt;::CreateSolver(solver_param));
+
+
+1,在src/caffe/solvers/adadelta_solver.cpp中调用宏:
+INSTANTIATE_CLASS(AdaDeltaSolver); // (1)
+REGISTER_SOLVER_CLASS(AdaDelta);//  (2)
+
+(1)其中 INSTANTIATE_CLASS的定义在include/caffe/common.hpp:
+#define INSTANTIATE_CLASS(classname) \
+  char gInstantiationGuard##classname; \
+  template class classname&lt;float&gt;; \
+  template class classname&lt;double&gt;
+
+(1)AdaDeltaSolver代入展开后:
+char gInstantiationGuardAdaDeltaSolver;
+template class AdaDeltaSolver&lt;float&gt;; template class AdaDeltaSolver&lt;double&gt;;
+
+
+(2) REGISTER_SOLVER_CLASS的定义在include/caffe/solver_factory.hpp中
+先定义一个template function名字叫: Creator_##type##Solver (该function new一个type##Solver类对象,返回new出来的指针)
+再生成两个static的SolverRegisterer的实例,
+实例的构造函数会调用AddCreator(type, creator)
+AddCreator把刚才的函数指针加进map中：registry[type] = creator;
+
+具体的定义如下：
+#define REGISTER_SOLVER_CREATOR(type, creator)                                 \
+  static SolverRegisterer&lt;float&gt; g_creator_f_##type(#type, creator&lt;float&gt;);    \
+  static SolverRegisterer&lt;double&gt; g_creator_d_##type(#type, creator&lt;double&gt;)   \
+
+#define REGISTER_SOLVER_CLASS(type)                                            \
+  template &lt;typename Dtype&gt;                                                    \
+  Solver&lt;Dtype&gt;* Creator_##type##Solver(                                       \
+      const SolverParameter& param)                                            \
+  {                                                                            \
+    return new type##Solver&lt;Dtype&gt;(param);                                     \
+  }//定义一个函数                                                                            \
+  REGISTER_SOLVER_CREATOR(type, Creator_##type##Solver)//生成两个class的static变量
+
+// main函数中事情的真相:
+在main函数中调用CreateSolver(param)的本质是在map中查找元素得到一个函数指针，
+(这个函数就是Creator_##type##Solver，通过static变量的构造函数加在map中)
+Creator_##type##Solver函数会new一个type##Solver类对象(以param为class的构造函数参数),返回new出来的指针
+CreateSolver(const SolverParameter& param){//简化版函数体
+    return registry[type](param);
+}
+
+
+</pre>
+
+
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>class MemoryDataLayer</h1>
+<pre>
+template &lt;typename Dtype&gt;
+class MemoryDataLayer : public BaseDataLayer&lt;Dtype&gt; {
+  private:
+  int batch_size_, channels_, height_, width_, size_;
+  Dtype* data_;
+  Dtype* labels_;
+  int n_;
+}
+
+
+(gdb) p  bottom_vecs_            (gdb) p top_vecs_               
+0 input {}                              {0x555555849fc0, 0x555555843040}
+1fc6    {0x555555849fc0},               {0x5555558b81c0},               
+fc6sig  {0x5555558b81c0},               {0x5555558b81c0},               
+fc7     {0x5555558b81c0},               {0x555555861d40},               
+loss    {0x555555861d40, 0x555555843040}{0x5555558456f0}                
+
+(gdb) p bottom_need_backward_
+{}
+{0},
+{1},
+{1}, 
+{1, 0}
+
+
+
+</pre>
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>caffe中cross entropy SigmoidCrossEntropyLossLayer</h1>
+<pre>
+src/caffe/layers/sigmoid_cross_entropy_loss_layer.cpp中
+Forward_cpu计算损失不是采用直接的计算方法,为了数值稳定性，有一定的变通和推导, 推导链接：
+caffe 论坛
+http://www.caffecn.cn/?/question/25
+<a href="documentImage/caffeCrossEntropyLoss.jpg"> 图片</a>
+csdn博客
+https://blog.csdn.net/u012235274/article/details/51361290
 </pre>
 	</body>
 </html>

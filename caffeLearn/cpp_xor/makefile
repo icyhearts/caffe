@@ -1,18 +1,25 @@
 .PHONY:clean all
 CXX=g++
 DEBUG=1
+CPU_ONLY=1
 OPTIMIZE_FLAG=
 LIB_DIRS=
 LIBRARIES=glog gflags protobuf boost_thread boost_system boost_filesystem pthread
 INCLUDE_DIRS=/usr/include/refcblas/ /usr/local/caffeDebug/include/ /opt/cuda/include/
 INCLUDE_FLAGS:=$(foreach incdir,${INCLUDE_DIRS}, -I${incdir})
 OPENCV_FLAGS=`pkg-config --cflags --libs opencv`
+
+ifeq (${CPU_ONLY}, 1)
+COMMON_FLAGS=${OPTIMIZE_FLAG} -DUSE_OPENCV -std=c++11 -DCPU_ONLY 
+else
 COMMON_FLAGS=${OPTIMIZE_FLAG} -DUSE_OPENCV -std=c++11
+
+endif
 ifeq (${DEBUG}, 1)
 
 COMMON_FLAGS+=-g
 LIBRARIES+=caffe-d  
-LIB_DIRS+=/home/ice/packageLinux/caffe/caffeDebug/build/lib/
+LIB_DIRS+=/usr/local/caffeDebug/lib/
 
 else
 
@@ -28,3 +35,5 @@ learn.elf:learn.cpp
 	ccache ${CXX} ${COMMON_FLAGS} ${INCLUDE_FLAGS} ${OPENCV_FLAGS} ${LDFLAGS} $^ -o  $@
 clean:
 	rm -rf cppPipe/obj/*.o cppPipe/bin/*.elf *.elf tmp/*.elf
+
+
