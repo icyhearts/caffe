@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<meta charset="UTF-8">
+	<link href="./readme.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+<h1>test on test set of image</h1>
+<pre>
+std::vector<Prediction> Classifier::Classify(const cv::Mat& img, int N) 
+Classify---| Predict
+</pre>
+<h1></h1>
+<pre>
+http://caffe.berkeleyvision.org/gathered/examples/mnist.html
+@1
+param { lr_mult: 1 }
+param { lr_mult: 2 }
+n this case, we will set the weight learning rate to be the same as the learning rate given by the solver during runtime, and the bias learning rate to be twice as large as that
+@2
+关于那个不懂的问题：
+layer {
+  name: "relu1"
+  type: "ReLU"
+  bottom: "ip1"
+  top: "ip1"
+}
+只有ReLU可以这么做：bottom = top
+Since ReLU is an element-wise operation, we can do in-place operations to save some memory.
+This is achieved by simply giving the same name to the bottom and top blobs. Of course,
+do NOT use duplicated blob names for other layer types!
+</pre>
+	</body>
+</html>

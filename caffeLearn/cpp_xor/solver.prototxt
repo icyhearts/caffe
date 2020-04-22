@@ -1,0 +1,16 @@
+net: "model.prototxt"
+base_lr: 0.02
+lr_policy: "step"
+gamma: 0.5
+stepsize: 500000
+display: 2000
+
+# 400 iter=1 epoch
+# 80,000 item = 20 epoch
+max_iter: 80000
+snapshot: 1000
+
+snapshot_prefix: "savedModel/XOR_"
+solver_mode: CPU
+test_iter: 1
+test_interval: 2000
