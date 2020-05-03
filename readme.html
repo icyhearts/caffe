@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <!-- 
 	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script></h1>
 	<h2> <script>cSubSection+=1;cSubSubSection=0; document.write("section ", cSection, ".",cSubSection," "); </script></h2>
@@ -8,17 +9,186 @@
 <tr> <th>type</th> <th>32bit </th>  <th>64 bit</th></tr>
 </table>
 -->
-<!DOCTYPE html>
 <html>
 	<head>
 	<meta charset="UTF-8">
-	<link href="./readme.css" rel="stylesheet" type="text/css">
+	<link href="./templateNSC.css" rel="stylesheet" type="text/css">
+	<script>
+var cSection=0;
+var cSubSection=0;
+var cSubSubSection=0;
+var cFigure=0;
+	</script>
+
+<script>
+	MathJax = {
+		tex:{
+			inlineMath: [['$', '$'], ['\\(', '\\)']]
+		},
+		svg:{
+			fontCache: 'global'
+		}
+	};
+</script>
+<script type="text/javascript" id="MathJax-script" async  src="./MathJax/es5/tex-chtml.js">
+</script>
+
+
 	</head>
 	<body>
 
-	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script></h1>
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>classes</h1>
 <pre>
-<a href="documentImage/IMG_20200417_111430.jpg">sigmoid函数求导 </a>
+
+class PoolingLayer : public Layer&lt;Dtype&gt; {
+ public:
+  explicit PoolingLayer(const LayerParameter& param)
+      : Layer&lt;Dtype&gt;(param) {}
+  virtual void LayerSetUp(const vector&lt;Blob&lt;Dtype&gt;*&gt;& bottom,
+      const vector&lt;Blob&lt;Dtype&gt;*&gt;& top);
+  virtual void Reshape(const vector&lt;Blob&lt;Dtype&gt;*&gt;& bottom,
+      const vector&lt;Blob&lt;Dtype&gt;*&gt;& top);
+
+
+ protected:
+  int kernel_h_, kernel_w_;
+  int stride_h_, stride_w_;
+  int pad_h_, pad_w_;
+  int channels_;
+  int height_, width_;
+  int pooled_height_, pooled_width_;
+  bool global_pooling_;
+  Blob&lt;Dtype&gt; rand_idx_;
+  Blob&lt;int&gt; max_idx_;
+};
+
+
+
+
+<a href="comment.softmax_layer.cpp">softmax layer comment Forward_cpu</a>
+template &lt;typename Dtype&gt;
+class SoftmaxLayer : public Layer&lt;Dtype&gt; {
+ public:
+  explicit SoftmaxLayer(const LayerParameter& param)
+      : Layer&lt;Dtype&gt;(param) {}
+  virtual void Reshape(const vector&lt;Blob&lt;Dtype&gt;*&gt;& bottom,
+      const vector&lt;Blob&lt;Dtype&gt;*&gt;& top);
+
+  virtual inline const char* type() const { return "Softmax"; }
+  virtual inline int ExactNumBottomBlobs() const { return 1; }
+  virtual inline int ExactNumTopBlobs() const { return 1; }
+
+ protected:
+  virtual void Forward_cpu(const vector&lt;Blob&lt;Dtype&gt;*&gt;& bottom,
+      const vector&lt;Blob&lt;Dtype&gt;*&gt;& top);
+  virtual void Forward_gpu(const vector&lt;Blob&lt;Dtype&gt;*&gt;& bottom,
+      const vector&lt;Blob&lt;Dtype&gt;*&gt;& top);
+  virtual void Backward_cpu(const vector&lt;Blob&lt;Dtype&gt;*&gt;& top,
+      const vector&lt;bool&gt;& propagate_down, const vector&lt;Blob&lt;Dtype&gt;*&gt;& bottom);
+  virtual void Backward_gpu(const vector&lt;Blob&lt;Dtype&gt;*&gt;& top,
+     const vector&lt;bool&gt;& propagate_down, const vector&lt;Blob&lt;Dtype&gt;*&gt;& bottom);
+
+  int outer_num_;//bottom[0]-&gt;count(0, softmax_axis_)
+  int inner_num_;//bottom[0]-&gt;count(softmax_axis_ + 1)
+  int softmax_axis_;
+  /// sum_multiplier is used to carry out sum using BLAS
+  Blob&lt;Dtype&gt; sum_multiplier_;//全1向量，长度为bottom[0]-&gt;shape(softmax_axis_)
+  /// scale is an intermediate Blob to hold temporary results.
+  Blob&lt;Dtype&gt; scale_;// 和输入同形，除了axis这一维度为1
+};
+
+
+
+
+
+template &lt;typename Dtype&gt;
+class SoftmaxWithLossLayer : public LossLayer&lt;Dtype&gt; {
+  /// The internal SoftmaxLayer used to map predictions to a distribution.
+  shared_ptr&lt;Layer&lt;Dtype&gt; &gt; softmax_layer_;
+  /// prob stores the output probability predictions from the SoftmaxLayer.
+  Blob&lt;Dtype&gt; prob_;
+  /// bottom vector holder used in call to the underlying SoftmaxLayer::Forward
+  vector&lt;Blob&lt;Dtype&gt;*&gt; softmax_bottom_vec_;
+  /// top vector holder used in call to the underlying SoftmaxLayer::Forward
+  vector&lt;Blob&lt;Dtype&gt;*&gt; softmax_top_vec_;
+  /// Whether to ignore instances with a certain label.
+  bool has_ignore_label_;
+  /// The label indicating that an instance should be ignored.
+  int ignore_label_;
+  /// How to normalize the output loss.
+  LossParameter_NormalizationMode normalization_;
+
+  int softmax_axis_, outer_num_, inner_num_;
+};
+
+template &lt;typename Dtype&gt;
+class BaseConvolutionLayer : public Layer&lt;Dtype&gt; {
+
+  /// @brief The spatial dimensions of the convolution input.
+  Blob&lt;int&gt; conv_input_shape_;
+
+  int num_spatial_axes_;
+  int bottom_dim_;//=
+  int top_dim_;
+  /// @brief The spatial dimensions of the output.
+  vector&lt;int&gt; output_shape_;
+  const vector&lt;int&gt;* bottom_shape_;
+
+  int channel_axis_;
+  int num_;
+  int channels_;
+  int group_;
+  int out_spatial_dim_;//top[0]-&gt;count(first_spatial_axis)
+  int weight_offset_;// weight_offset_ = conv_out_channels_ * kernel_dim_ / group_;= Cout*Cin*Hk*Wk/group_
+  int num_output_;// output channel
+  bool bias_term_;
+  bool is_1x1_;
+  bool force_nd_im2col_;
+
+  int num_kernels_im2col_;
+  int num_kernels_col2im_;
+  int conv_out_channels_;
+  int conv_in_channels_;// C_i
+</pre>
+// $H_{out}\times W_{out}$ :
+<pre>
+  int conv_out_spatial_dim_;//conv_out_spatial_dim_ = top[0]-&gt;count(first_spatial_axis);
+// first_spatial_axis=2; N C |H W
+</pre> 
+  //$C_{in}\times H_k \times W_k$ :
+<pre>
+  int kernel_dim_;// kernel_dim_ = this-&gt;blobs_[0]-&gt;count(1)
+  int col_offset_;//kernel_dim_ * conv_out_spatial_dim_
+  int output_offset_;// output_offset_ = conv_out_channels_ * conv_out_spatial_dim_ / group_= Cout*Hout*Wout
+
+  Blob&lt;Dtype&gt; col_buffer_;
+  Blob&lt;Dtype&gt; bias_multiplier_;
+  /// @brief The spatial dimensions of the col_buffer.
+  vector&lt;int&gt; col_buffer_shape_;
+
+
+};
+
+
+template &lt;typename Dtype&gt;
+class ConvolutionLayer : public BaseConvolutionLayer&lt;Dtype&gt; {
+ public:
+};
+//
+template &lt;typename Dtype&gt;
+class BasePrefetchingDataLayer :
+    public BaseDataLayer&lt;Dtype&gt;, public InternalThread {
+  virtual void InternalThreadEntry();
+  virtual void load_batch(Batch&lt;Dtype&gt;* batch) = 0;
+
+  vector&lt;shared_ptr&lt;Batch&lt;Dtype&gt; &gt; &gt; prefetch_;
+  BlockingQueue&lt;Batch&lt;Dtype&gt;*&gt; prefetch_free_;
+  BlockingQueue&lt;Batch&lt;Dtype&gt;*&gt; prefetch_full_;
+  Batch&lt;Dtype&gt;* prefetch_current_;
+
+};
+<a href="documentImage/classcaffe_1_1BasePrefetchingDataLayer.png">class BasePrefetchingDataLayer</a>
+<a href="documentImage/softmax_cross_entropy_loss_IMG_20200417_111430.jpg">softmax带cross entropy loss的求导 </a>
 参考文献：https://blog.csdn.net/chaipp0607/article/details/101946040
 template &lt;typename Dtype&gt;
 class SigmoidCrossEntropyLossLayer : public LossLayer&lt;Dtype&gt; {
@@ -132,7 +302,34 @@ class Net {
 };
 </pre>
 	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>call graph</h1>
+<a href="documentImage/conv2gemm.jpg">卷积转换成gemm</a>
 <pre>
+caffe::Solver&lt;float&gt;::Solve 
+  |caffe::Solver&lt;float&gt;::Step 
+    |caffe::Net&lt;float&gt;::ForwardBackward 
+      |caffe::Net&lt;float&gt;::Forward 
+        |caffe::Net&lt;float&gt;::ForwardFromTo 
+          |caffe::Layer&lt;float&gt;::Forward 
+          | |caffe::BaseConvolutionLayer&lt;float&gt;::Reshape 
+          | | |caffe::ConvolutionLayer&lt;float&gt;::compute_output_shape //改变output_shape_这个vector
+          | |
+          | |caffe::ConvolutionLayer&lt;float&gt;::Forward_cpu //两个for循环，调用forward_cpu_gemm,
+          | | //每调用一次forward_cpu_gemm, bottom_data指针+=bottom_dim_(input的CxHxW),共调用num_=batchSize次
+          | | //top_data指针+=top_dim(output的CxHxW)
+          |   |caffe::BaseConvolutionLayer&lt;float&gt;::forward_cpu_gemm(const Dtype* input,
+          |   |  const Dtype* weights, Dtype* output, bool skip_im2col) //forward_cpu_gemm处理一个batch中一张图的多个通道,
+          |   |  //对CxHxW的特征图，通过conv_im2col_cpu转换成col矩阵再用caffe_cpu_gemm把权重矩阵和转换过的col矩阵作矩阵乘法
+          |   | |caffe::BaseConvolutionLayer&lt;float&gt;::conv_im2col_cpu// 
+          |   |   |caffe::im2col_cpu&lt;float&gt; //caffeLearn/n6_im2col_cpu.cpp练习im2col_cpu. comment.im2col.cpp注释
+          |   |caffe::BaseConvolutionLayer&lt;float&gt;::forward_cpu_bias
+
+
+
+|caffe::InternalThread::entry 
+  |caffe::BasePrefetchingDataLayer&lt;float&gt;::InternalThreadEntry 
+    |caffe::DataLayer&lt;float&gt;::load_batch 
+
+/// cpp_xor问题
 InnerProductLayer&lt;Dtype&gt;::Forward_cpu
 caffe中全连接层计算的是数学上:
 input       * weight     = output
@@ -174,7 +371,7 @@ main----|ReadSolverParamsFromTextFileOrDie
       | | | | |caffe::SigmoidCrossEntropyLossLayer&lt;float&gt;::Reshape
       | | | |   |LossLayer&lt;Dtype&gt;::Reshape(bottom,top);//vector<int>loss_shape(0); //Loss layers output a scalar;0 axes.
       | |caffe::Net&lt;float&gt;::Backward
-      |   |caffe::caffe::Net&lt;float&gt;::BackwardFromTo
+      |   |caffe::Net&lt;float&gt;::BackwardFromTo
       |UpdateSmoothedLoss(loss, start_iter, average_loss)
       |caffe::SGDSolver&lt;float&gt;::ApplyUpdate
         |Normalize(param_id);
@@ -232,6 +429,13 @@ message ReLUParameter {
 }
 LayerParameter有很多xxxParameter作为数据成员:
 message LayerParameter {
+  optional string name = 1; // the layer name
+  optional string type = 2; // the layer type
+  repeated string bottom = 3; // the name of each bottom blob
+  repeated string top = 4; // the name of each top blob
+
+  // The train / test phase for computation.
+  optional Phase phase = 10;
   optional ReLUParameter relu_param = 123;
   optional SigmoidParameter sigmoid_param = 38;
 }
@@ -412,6 +616,82 @@ http://www.caffecn.cn/?/question/25
 <a href="documentImage/caffeCrossEntropyLoss.jpg"> 图片</a>
 csdn博客
 https://blog.csdn.net/u012235274/article/details/51361290
+</pre>
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>model.proto和caffe.proto里面的message对应关系</h1>
+<pre>
+message LayerParameter:
+layer {
+  //optional string name = 1; // the layer name
+//  optional string type = 2; // the layer type
+//  repeated string top = 4; // the name of each top blob
+  name: "mnist"
+  type: "Data"
+  top: "data"
+  top: "label"
+//  repeated NetStateRule include = 8;
+  include {
+//  optional Phase phase = 1;
+    phase: TRAIN
+  }
+//  optional TransformationParameter transform_param = 100;
+  transform_param {
+//  optional float scale = 1 [default = 1];
+    scale: 0.00390625
+  }
+//  optional DataParameter data_param = 11;
+  data_param {
+//  optional string source = 1;
+    source: "examples/mnist/mnist_train_lmdb"
+//  optional uint32 batch_size = 4;
+    batch_size: 64
+//  optional DB backend = 8 [default = LEVELDB];
+    backend: LMDB
+  }
+}
+//
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "data"
+  top: "conv1"
+//  repeated ParamSpec param = 6;
+  param {
+//  optional float lr_mult = 3 [default = 1.0];
+    lr_mult: 1
+  }
+  param {
+    lr_mult: 2
+  }
+//  optional ConvolutionParameter convolution_param = 106;
+  convolution_param {
+//  optional uint32 num_output = 1; // The number of outputs for the layer
+    num_output: 20
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+</pre>
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>lenet</h1>
+<pre>
+class DataLayer : public BasePrefetchingDataLayer<Dtype> {
+}
+                         bottom_vecs_                    top_vecs_                       bottom_need_backward_     
+0 mnist                  {}                              {0x5555558b6c00,0x5555558b6dd0} {}    
+1 conv1                  {0x5555558b6c00}                {0x5555558aced0}                {0},  
+2 pool1                  {0x5555558aced0}                {0x5555558aeb30}                {1},  
+3 conv2                  {0x5555558aeb30}                {0x5555558af3f0}                {1},  
+4 pool2                  {0x5555558af3f0}                {0x5555558af250}                {1},  
+5 ip1                    {0x5555558af250}                {0x5555558a70f0}                {1},  
+6 relu1                  {0x5555558a70f0}                {0x5555558a70f0}                {1},  
+7 ip2                    {0x5555558a70f0}                {0x5555558a0e50}                {1},  
+8 loss(SoftmaxWithLoss)  {0x5555558a0e50,0x5555558b6dd0} {0x5555558a6340}                {1, 0}
+
 </pre>
 	</body>
 </html>
