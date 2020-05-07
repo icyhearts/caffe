@@ -1,0 +1,89 @@
+body{
+	counter-reset:section;
+	font-size:16pt;
+	margin-left:20pt;
+}
+h1{
+	font-size:20pt;
+	/* font-family:Simhei,Arial,sans-serif; */
+}
+h2{
+	font-size:18pt;
+	font-family:Simhei,Arial,sans-serif;
+	color:black;
+
+}
+h3{
+	font-family:Simhei,Arial,sans-serif;
+	font-size:18pt;
+}
+b{
+	color:red;
+}
+pre{
+	font-size:12pt;
+}
+table,th,td{
+	border: 1px solid black;
+}
+table{
+	border-collapse: collapse;
+	width: 100%;
+}
+th,td{
+	text-align: left;
+	padding: 10px;
+}
+p{
+line-height:150%;
+font-size:16pt;
+text-indent:2em;
+}
+#simple{
+	padding-top:1em;
+/*	padding-left:0.5em;*/
+	padding-bottom:1em;
+	font-size:12pt;
+	line-height:150%
+}
+#code{
+	padding-top:1em;
+	padding-left:0.5em;
+	padding-bottom:1em;
+	font-size:12pt;
+	font-family:Consolas,Simhei,monospace;
+	line-height:130%;
+	color:green;
+/*
+	background-color:black;
+	color:white;
+	*/
+}
+pre span {
+	counter-increment: line;
+}
+pre span:before {
+	content: counter(line); 
+	/* width 和 text-align：解决1位数和2位数行号右边竖线断裂问题*/
+	width:1em;
+	text-align:right;
+	display: inline-block; /*让上下行的竖线连接成一条 */
+/*	行号右边的竖线:border-right: 1px solid #ddd; */
+	border-right: 1px solid #aaaaaa;
+/* the style of line right of number */
+	padding: 0 0.5em;
+	margin-right: .5em;
+	color:#aaaaaa;
+}
+code{
+padding:3px 4px 3px 4px;
+border-radius:4px;
+background-color:#eeffee;
+border:1px solid;
+border-color:red;
+}
+a{
+font-size: 14pt;
+text-decoration:none;
+border-bottom:    thin dotted blue;
+}
