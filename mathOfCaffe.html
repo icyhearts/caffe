@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<!-- 
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script></h1>
+	<h2> <script>cSubSection+=1;cSubSubSection=0; document.write("section ", cSection, ".",cSubSection," "); </script></h2>
+	<h3> <script>cSubSubSection+=1; document.write("section ", cSection, ".",cSubSection,".",cSubSubSection," "); </script></h3>
+	<h1> <script>cSection+=1;cSubSection=0;cSubSection=0;document.write("section ", cSection, " "); </script></h1>
+<table style="width:30%">
+<caption> padding, alignment, sizeof </caption>
+<tr> <th>type</th> <th>32bit </th>  <th>64 bit</th></tr>
+</table>
+-->
+<html>
+	<head>
+	<meta charset="UTF-8">
+	<link href="./templateNSC.css" rel="stylesheet" type="text/css">
+	<script>
+var cSection=0;
+var cSubSection=0;
+var cSubSubSection=0;
+var cFigure=0;
+var cTable=0;
+	</script>
+
+<script>
+	MathJax = {
+		tex:{
+			inlineMath: [['$', '$'], ['\\(', '\\)']],
+			tags:'ams'
+		},
+		svg:{
+			fontCache: 'global'
+		}
+	};
+</script>
+<script type="text/javascript" id="MathJax-script" async  src="./MathJax/es5/tex-chtml.js">
+</script>
+
+
+	</head>
+	<body>
+
+
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>InnerProductLayer</h1>
+<table>
+<tr>
+	<td>N_</td> <td> K_ </td> <td>M_</td>
+</tr>
+<tr>
+	<td>$N_{out}$</td> <td> $N_{in}$ </td> <td>B</td>
+</tr>
+</table >
+
+
+\begin{equation}
+\label{eq_pz_px}
+z=f(\mathbb{Y}), \mathbb{Y}=\mathbb{A}\mathbb{X}+\mathbb{B} \rightarrow \frac{\partial{z}}{\partial\mathbb{X}}=\mathbb{A}^T\frac{\partial z}{\partial\mathbb{Y}}
+\end{equation}
+<p>
+in eq \ref{eq_pz_px} we see
+</p>
+
+
+\begin{equation}
+\label{eq_reverse_pz_px}
+z=f(\mathbb{Y}), \mathbb{Y}=\mathbb{X}\mathbb{A}+\mathbb{B} \rightarrow \frac{\partial{z}}{\partial\mathbb{X}}=\frac{\partial z}{\partial\mathbb{Y}}\mathbb{A}^T
+\end{equation}
+
+<p>
+in eq \ref{eq_reverse_pz_px} we see
+</p>
+
+
+
+<table >
+<caption>
+	<script>++cTable; document.write("Table ",cTable, " ")</script>
+	InnerProductLayer forward
+</caption>
+<tr> 
+<td>item </td> <td>-</td>   <td> NoTrans </td> <td>NoTrans </td> <td>NoTrans </td> <td>Trans</td>
+</tr>
+
+<tr>
+<td>code </td> <td>top= </td> <td>bias_multiplier_ </td> <td>*blobs_[1]  </td> <td>+bottom </td> <td>*weight</td>
+</tr>
+<tr>
+<td>RAM </td> <td> $B\times N_{out}$ </td> <td>B </td> <td>$N_{out}$ </td> <td>$B\times N_{in}$ </td>  <td>$N_{out}\times N_{in}$</td>
+</tr>
+
+<tr>
+<td>math </td>
+<td>$\mathbb{Y}=$ </td>
+<td>$\vec{1}$  </td>
+<td>*$ {\vec{b}}^T$ </td>
+<td>+$\mathbb{I} $ </td>
+<td>$*\mathbb{W}^T$ </td>
+</tr>
+
+<tr>
+<td>math size </td>
+<td>$B\times N_{out}$</td>
+<td>$B\times 1$</td>
+<td>$1\times N_{out}$ </td>
+<td> $B\times N_{in}$ </td>
+<td> $(N_{out}\times N_{in})^T$</td>
+</tr>
+</table>
+<br>
+<br>
+
+<table style="font-size:16pt">
+<caption>
+	<script>++cTable; document.write("Table ",cTable, " ")</script>
+$ \frac{ \partial e}{\partial (\mathbb{W}^T)}=\mathbb{I}^T\frac{\partial e}{\partial\mathbb{Y}} \rightarrow \frac{ \partial e}{\partial \mathbb{W}}=(\frac{\partial e}{\partial\mathbb{Y}})^T \mathbb{I} $
+
+</caption>
+
+
+<tr>
+	<td>item </td><td> -   </td><td> Trans </td><td> NoTrans </td>
+</tr>
+<tr>
+	<td>  code </td><td>blobs_[0]-&gt;mutable_cpu_diff() </td><td> top[0]-&gt;cpu-_diff() </td><td> bottom[0]-&gt;cpu_data()</td>
+</tr>
+<tr>
+	<td>RAM size </td><td> $N_{out}\times N_{in}$ </td><td> $B\times N_{out}$ </td><td> $B\times N_{in}$</td>
+</tr>
+<tr>
+	<td>math</td><td> $\frac{\partial e}{\partial \mathbb{W}}= $ </td><td>$(\frac{\partial e}{\partial\mathbb{Y}})^T$ </td><td> *$\mathbb{I}$ </td>
+</tr>
+
+<tr>
+<td>math size </td><td> $N_{out}\times N_{in}$ </td><td> $(B\times N_{out})^T$ </td><td> $B\times N_{in}$ </td>
+</tr>
+</table>
+<br>
+<br>
+
+<!-- 对b的偏导 -->
+<table style="font-size:16pt">
+<caption>
+	<script>++cTable; document.write("Table ",cTable, " ")</script>
+$ \frac{ \partial e}{\partial (\vec{b}^T)}=\vec{1}^T\frac{\partial e}{\partial\mathbb{Y}} \rightarrow \frac{ \partial e}{\partial \vec{b}}=(\frac{\partial e}{\partial\mathbb{Y}})^T \vec{1} $
+</caption>
+<tr>
+	<td>item </td><td> -   </td><td> Trans </td><td> NoTrans </td>
+</tr>
+<tr>
+	<td>  code </td><td> blobs_[1]-&gt;mutable_cpu_diff()</td><td> top_diff</td><td> bias_multiplier_.cpu_data()</td>
+</tr>
+
+<tr>
+	<td>RAM size </td>
+	<td> $N_{out}$ </td>
+	<td> $B\times N_{out}$ </td>
+	<td> $B\times 1$</td>
+</tr>
+
+<tr>
+	<td>math</td>
+	<td> $\frac{ \partial e}{\partial \vec{b}}= $</td>
+	<td> $(\frac{\partial e}{\partial\mathbb{Y}})^T$</td>
+	<td> $* \vec{1}$</td>
+</tr>
+
+<tr>
+	<td>math size </td>
+	<td>$N_out\times 1$ </td>
+	<td>$(B\times N_{out})^T$ </td>
+	<td> $B\times 1$</td>
+</tr>
+</table>
+<!-- end of 对b的偏导-->
+<br>
+<br>
+
+
+
+
+<table style="font-size:16pt">
+<caption>
+	<script>++cTable; document.write("Table ",cTable, " ")</script>
+$ \frac{ \partial e}{\partial \mathbb{I}}=\frac{\partial e}{\partial\mathbb{Y}}{\mathbb{W}^T}^T= \frac{\partial e}{\partial\mathbb{Y}}\mathbb{W}$
+</caption>
+<tr>
+	<td>item </td><td> -   </td><td> NoTrans </td><td> NoTrans </td>
+</tr>
+<tr>
+	<td>  code </td><td>bottom-&gt;diff()</td><td>top_diff</td><td>blobs_[0]</td>
+</tr>
+<tr>
+	<td>RAM size </td><td> $B\times N_{in}$ </td><td> $B\times N_{out}$ </td><td> $N_{out}\times N_{in}$</td>
+</tr>
+
+<tr>
+	<td>math</td><td> $\frac{\partial e}{\partial \mathbb{I}}= $ </td><td>$\frac{\partial e}{\partial\mathbb{Y}}$ </td><td> *$\mathbb{W}$ </td>
+</tr>
+
+<tr>
+	<td>math size </td><td> $B\times N_{in}$ </td><td> $B\times N_{out}$ </td><td> $N_{out}\times N_{in}$</td>
+</tr>
+
+
+</table>
+<br>
+<br>
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>ConvolutionLayer</h1>
+	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>Forward_cpu</h1>
+<p>
+Forward_cpu的核心在于把input转换成column matrix.
+Forward_cpu中，无法像InnerProductLayer一样一次对NxCxHxW的输入全部处理,只能一次处理CxHxW的数据。
+因此需要处理N次。 对应的代码是
+</p>
+<pre>
+    for (int n = 0; n &lt; this-&gt;num_; ++n) {// num_ = batchSize
+      this-&gt;forward_cpu_gemm(bottom_data + n * this-&gt;bottom_dim_, weight,
+          top_data + n * this-&gt;top_dim_);
+      if (this-&gt;bias_term_) {
+        const Dtype* bias = this-&gt;blobs_[1]-&gt;cpu_data();
+        this-&gt;forward_cpu_bias(top_data + n * this-&gt;top_dim_, bias);
+      }
+    }
+</pre>
+<p>
+假设卷积核大小为2x2x3x3，即：
+<img src="documentImage/weight_of_conv_IMG_20200503_091057.jpg" width="80%">
+</p>
+<p> conv_im2col_cpu对im2col_cpu进行封装，下面展示了一个例子，把2x5x5的的特征图进行转换，在pad=1, dilation=2, kernel=3, stride=2的情况下，
+得到18x4的矩阵（下面把转换后的矩阵称为列化矩阵）。
+列化矩阵的形状的通式：$C_{in}*H_k*W_k \times H_{out}*W_{out}$。
+我们可以把列化矩阵当作$C_{in}$个子列化矩阵，每个子列化矩阵代表由一个原始输入通道得到的。
+子列化矩阵的同一列来自一个滑动窗口，子列化矩阵的同一行代表了所有窗口具有相同$x$、$y$索引的位置得到的元素。
+即子列化矩阵第0行与卷核的第(0,0)个元素相乘，
+即子列化矩阵第1行与卷核的第(0,1)个元素相乘，
+即子列化矩阵第2行与卷核的第(0,2)个元素相乘，...，
+即子列化矩阵第$H_k*W_k-1$行与卷核的第(H_k-1, W_k-1)个元素相乘，
+<img src="documentImage/im2col_IMG_20200503_091048.jpg" width="80%">
+</p>
+
+<table >
+<caption>
+	<script>++cTable; document.write("Table ",cTable, " ")</script>
+	ConvolutionLayer forward
+</caption>
+<tr>
+  <td>-</td>
+  <td>-</td>
+  <td colspan="2">gemm</td>
+  <td colspan="2">gemm</td>
+</tr>
+
+<tr> 
+<td>item </td> <td>-</td>   <td> NoTrans </td> <td>NoTrans </td> <td>NoTrans </td> <td>NoTrans</td>
+</tr>
+
+<tr>
+  <td>math</td>
+  <td>$\mathbb{Y}$</td>
+  <td>$\mathbb{W}$</td>
+  <td>*$\mathbb{I}$</td>
+  <td>+$\vec{b}$</td>
+  <td>*${\vec{1}}^T$</td>
+</tr>
+
+<tr>
+  <td>math size</td>
+  <td>$C_{out}\times H_{out}*W_{out}$</td>
+  <td>$C_{out}\times C_{in}*H_k*W_k$</td>
+  <td>$C_{in}*H_k*W_k\times H_{out}*W_{out}$</td>
+  <td>$C_{out}\times 1$</td>
+  <td>$1\times H_{out}*W_{out}$</td>
+</tr>
+
+
+<tr>
+  <td>RAM size</td>
+  <td>$C_{out}\times H_{out}*W_{out}$</td>
+  <td>$C_{out}\times C_{in}*H_k*W_k$</td>
+  <td>$C_{in}*H_k*W_k\times H_{out}*W_{out}$</td>
+  <td>$C_{out}$</td>
+  <td>$H_{out}*W_{out}$</td>
+</tr>
+
+<tr>
+  <td>code </td>
+  <td>top= </td>
+  <td>weight</td>
+  <td>*col_buff</td>
+  <td>+bias </td>
+  <td>*bias_multiplier_</td>
+</tr>
+</table>
+
+
+	<h2> <script>cSubSection+=1;cSubSubSection=0; document.write("section ", cSection, ".",cSubSection," "); </script>Backward_cpu</h2>
+<p>
+首先对b求偏导。
+</p>
+
+<!-- 对b的偏导 -->
+<table >
+<caption>
+	<script>++cTable; document.write("Table ",cTable, " ")</script>
+BaseConvolutionLayer&lt;Dtype&gt;::backward_cpu_bias:
+$\frac{ \partial e}{\partial \vec{b}} = \frac{\partial e}{\partial\mathbb{Y}} {{\vec{1}}^T}^T
+= \frac{\partial e}{\partial\mathbb{Y}} \vec{1}
+$
+</caption>
+<tr>
+	<td>- </td>
+    <td> -   </td>
+    <td colspan="2"> gemv $\beta=1$表明e对b的梯度需要累加，累加次数等于batchSize</td>
+</tr>
+<tr>
+	<td>item </td><td> -   </td><td> NoTrans </td><td> - </td>
+</tr>
+
+<tr>
+  <td>math </td>
+  <td> $\frac{ \partial e}{\partial \vec{b}} =$ </td>
+  <td> $\frac{\partial e}{\partial\mathbb{Y}} $</td>
+  <td>$\vec{1}$ </td>
+</tr>
+
+
+<tr>
+  <td>math size </td>
+  <td> $C_{out}\times 1$ </td>
+  <td>$C_{out}\times H_{out}*W_{out}$ </td>
+  <td>$H_{out}*W_{out}\times 1$ </td>
+</tr>
+<tr>
+  <td>code </td>
+  <td>bias_diff </td>
+  <td>top_diff </td>
+  <td>bias_multiplier_ </td>
+</tr>
+
+
+<tr>
+  <td>RAM size </td>
+  <td> $C_{out}$ </td>
+  <td>$C_{out}\times H_{out}*W_{out}$ </td>
+  <td>$H_{out}*W_{out}$ </td>
+</tr>
+
+
+</table>
+<br>
+<br>
+<!-- end of 对b的偏导-->
+
+
+<!-- 对W的偏导 -->
+<table >
+<caption>
+  <script>++cTable; document.write("Table ",cTable, " ")</script>
+BaseConvolutionLayer&lt;Dtype&gt;::weight_cpu_gemm:
+$ \frac{\partial e}{\partial \mathbb{W}} = \frac{\partial e}{\partial \mathbb{Y}} {\mathbb{I}}^T $.  会调用im2col_cpu, 生成的col_buff被backward_cpu_gemm重复利用。
+</caption>
+<tr>
+	<td>- </td>
+    <td> -   </td>
+    <td colspan="2"> gemm. $\beta=1$表明e对W的梯度需要累加，累加次数等于batchSize </td>
+</tr>
+<tr>
+	<td>item </td><td> -   </td><td> NoTrans </td><td> Trans </td>
+</tr>
+
+<tr>
+  <td>math </td>
+  <td> $\frac{\partial e}{\partial \mathbb{W}} =$ </td>
+  <td> $\frac{\partial e}{\partial \mathbb{Y}}$</td>
+  <td>${\mathbb{I}}^T$ </td>
+</tr>
+
+
+<tr>
+  <td>math size </td>
+  <td> $C_{out}\times C_{in}*H_k*W_k$ </td>
+  <td>$C_{out}\times H_{out}*W_{out}$</td>
+  <td>$H_{out}*W_{out} \times C_{in}*H_k*W_k$</td>
+</tr>
+<tr>
+  <td>code </td>
+  <td>weight_diff</td>
+  <td>top_diff</td>
+  <td>col_buff</td>
+</tr>
+
+
+<tr>
+  <td>RAM size </td>
+  <td>$C_{out}\times C_{int}*H_k*W_k$</td>
+  <td>$C_{out}\times H_{out}*W_{out}$</td>
+  <td>$C_{in}*H_k*W_k \times H_{out}*W_{out} $</td>
+</tr>
+</table>
+<br>
+<br>
+<!-- end of 对W的偏导-->
+
+
+
+<!-- 对I的偏导 -->
+<table >
+<caption>
+  <script>++cTable; document.write("Table ",cTable, " ")</script>
+BaseConvolutionLayer&lt;Dtype&gt;::backward_cpu_gemm
+$ \frac{\partial e}{\partial \mathbb{I}} = {\mathbb{W}}^T \frac{\partial e}{\partial \mathbb{Y}}$。
+把e对col_buff的梯度转换成 e对<em style="color:red">真正输入</em>的梯度: 调用col2im_cpu，im2col_cpu的反向变换
+注意：caffe的col2im_cpu并不是严格的im2col_cpu的逆变换，因为col2im_cpu执行的累加:data_im[input_row * width + input_col] += *data_col;
+因此，col2im_cpu仅适用于回传梯度，不是严格意义的col2im。
+caffe的col2im_cpu，如果原始矩阵某个元素在im2col_cpu过程中被放在列化矩阵多个位置，假设在列化矩阵中M个位置出现，则col2im_cpu过程中会把这个值累加M次，很明显，严格意义上的col2im应该仅出现一次，不过对于回传梯度，出现M次是正确的。
+当然，caffe中调用col2im_cpu的函数都只用它来回传梯度，比如BaseConvolutionLayer&lt;Dtype&gt;::backward_cpu_gemm用它求误差e对bottom的偏导。 没有在前向代码中见过调用col2im_cpu的地方。
+<a href="documentImage/dense_im2col_IMG_20200503_225405.jpg">原始矩阵中某个元素在列化矩阵中多次出现的例子(中间的元素)</a>
+</caption>
+<tr>
+	<td>- </td>
+    <td> -   </td>
+    <td colspan="2"> gemm 无累加:$\beta=0$</td>
+</tr>
+<tr>
+	<td>item </td><td> -   </td><td> Trans </td><td> NoTrans </td>
+</tr>
+
+<tr>
+  <td>math </td>
+  <td>(这是e对col_buff的梯度)$\frac{\partial e}{\partial \mathbb{I}} =$</td>
+  <td>${\mathbb{W}}^T$</td>
+  <td>$\frac{\partial e}{\partial \mathbb{Y}}$</td>
+</tr>
+
+
+<tr>
+  <td>math size </td>
+  <td>$C_{in}*H_k*W_k \times H_{out}*W_{out}$</td>
+  <td>$C_{in}*H_k*W_k \times C_{out}$</td>
+  <td>$C_{out} \times H_{out}*W_{out}$</td>
+</tr>
+<tr>
+  <td>code </td>
+  <td>bottom_diff</td>
+  <td>weight</td>
+  <td>top_diff</td>
+</tr>
+
+
+<tr>
+  <td>RAM size </td>
+  <td>$C_{in}*H_k*W_k \times H_{out}*W_{out}$</td>
+  <td>$ C_{out} \times C_{in}*H_k*W_k $</td>
+  <td>$C_{out} \times H_{out}*W_{out}$</td>
+</tr>
+</table>
+<!-- end of 对I的偏导-->
+
+	</body>
+</html>
