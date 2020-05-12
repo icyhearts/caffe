@@ -40,6 +40,8 @@ var cFigure=0;
 	<h1> <script>cSection+=1;cSubSection=0;cSubSubSection=0; document.write("section ", cSection, " "); </script>classes</h1>
 <pre>
 
+
+
 class PoolingLayer : public Layer&lt;Dtype&gt; {
  public:
   explicit PoolingLayer(const LayerParameter& param)
@@ -175,6 +177,38 @@ class ConvolutionLayer : public BaseConvolutionLayer&lt;Dtype&gt; {
  public:
 };
 //
+
+template&lt;typename T&gt;
+class BlockingQueue {
+ public:
+  explicit BlockingQueue();
+  void push(const T& t);
+  bool try_pop(T* t);
+  // This logs a message if the threads needs to be blocked
+  // useful for detecting e.g. when data feeding is too slow
+  T pop(const string& log_on_wait = "");
+  bool try_peek(T* t);
+  // Return element without removing it
+  T peek();
+  size_t size() const;
+ protected:
+  /**
+   Move synchronization fields out instead of including boost/thread.hpp
+   to avoid a boost/NVCC issues (#1009, #1010) on OSX. Also fails on
+   Linux CUDA 7.0.18.
+   */
+  class sync;
+  std::queue&lt;T&gt; queue_;
+  shared_ptr&lt;sync&gt; sync_;
+DISABLE_COPY_AND_ASSIGN(BlockingQueue);
+};
+
+template &lt;typename Dtype&gt;
+class Batch {
+ public:
+  Blob&lt;Dtype&gt; data_, label_;
+};
+
 template &lt;typename Dtype&gt;
 class BasePrefetchingDataLayer :
     public BaseDataLayer&lt;Dtype&gt;, public InternalThread {
@@ -187,7 +221,7 @@ class BasePrefetchingDataLayer :
   Batch&lt;Dtype&gt;* prefetch_current_;
 
 };
-<a href="documentImage/classcaffe_1_1BasePrefetchingDataLayer.png">class BasePrefetchingDataLayer</a>
+<img src="documentImage/classcaffe_1_1BasePrefetchingDataLayer__inherit__graph.png">
 <a href="documentImage/softmax_cross_entropy_loss_IMG_20200417_111430.jpg">softmax带cross entropy loss的求导 </a>
 参考文献：https://blog.csdn.net/chaipp0607/article/details/101946040
 template &lt;typename Dtype&gt;

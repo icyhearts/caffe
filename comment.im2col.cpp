@@ -54,24 +54,24 @@ void col2im_cpu(const Dtype* data_col, const int channels,
   const int output_w = (width + 2 * pad_w -
     (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
   const int channel_size = height * width;
-  for (int channel = channels; channel--; data_im += channel_size) {// channel仅控制循环次数
-    for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {// kernel_row决定input_row的初值
+  for (int channel = channels; channel--; data_im += channel_size) {// channel仅控制data_im += channel_size被执行的次数,不参与计算
+    for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {// kernel_row决定input_row的初值,base值
       for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {// kernel_col决定input_col的初值
         int input_row = -pad_h + kernel_row * dilation_h;//input_row与height作为is_a_ge_zero_and_a_lt_b参数//在这里找到卷积核中的某一行在输入图像中的第一个操作区域的行索引
 		/*第四个和第五个for循环表示了输出单通道矩阵的某一行，同时体现了输出单通道矩阵的列数*/
-        for (int output_rows = output_h; output_rows; output_rows--) {//output_rows仅控制循环次数,决定input_row+=stride_h执行次数 
+        for (int output_rows = output_h; output_rows; output_rows--) {//output_row仅控制循环次数,决定input_row+=stride_h执行次数,不参与计算
           if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
             data_col += output_w;
-          } else {
+          } else {// if (!is_a_ge_zero_and_a_lt_b(input_row, height)) else {}
             int input_col = -pad_w + kernel_col * dilation_w;
-            for (int output_col = output_w; output_col; output_col--) {
+            for (int output_col = output_w; output_col; output_col--) {//output_col仅控制input_col+=stride_w执行次数,不参与计算
               if (is_a_ge_zero_and_a_lt_b(input_col, width)) {
                 data_im[input_row * width + input_col] += *data_col;
               }
               data_col++;
               input_col += stride_w;
             }//5层循环, output_col控制
-          }
+          }// if (!is_a_ge_zero_and_a_lt_b(input_row, height)) else {}
           input_row += stride_h;
         }//4层循环，output_rows控制
       }//3层循环,kernel_col控制

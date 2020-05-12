@@ -30,5 +30,7 @@ bin/n6_im2col_cpu.elf:n6_im2col_cpu.cpp
 	${CXX} ${COMMON_FLAGS} ${INCLUDE_FLAGS} ${OPENCV_FLAGS} ${LDFLAGS} $< -o  $@
 bin/n7_softmax_layer.elf:n7_softmax_layer.cpp
 	${CXX} ${COMMON_FLAGS} -D CPU_ONLY ${INCLUDE_FLAGS} ${OPENCV_FLAGS} ${LDFLAGS} $< -o  $@
+bin/n8_booost_thread.elf:n8_booost_thread.cpp
+	${CXX} ${COMMON_FLAGS} -D CPU_ONLY ${INCLUDE_FLAGS} ${OPENCV_FLAGS} ${LDFLAGS} $< -o  $@
 clean:
 	rm -rf cppPipe/obj/*.o cppPipe/bin/*.elf *.elf
