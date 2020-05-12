@@ -2,7 +2,7 @@
 CXX=g++
 DEBUG=1
 
-LIBRARIES=glog gflags boost_system protobuf
+LIBRARIES=glog gflags boost_system protobuf boost_thread pthread
 COMMON_FLAGS+=-DUSE_OPENCV
 OPENCV_FLAGS=`pkg-config --cflags --libs opencv`
 INCLUDE_DIRS=/usr/include/refcblas/ /usr/local/caffeDebug/include/ /opt/cuda/include/
